@@ -25,6 +25,9 @@ class Notifier implements INotifier {
 
   post = async (notification: INotificationEvent) => {
     try {
+      if (notification.recipient === "") {
+        notification.recipient = "*";
+      }
       const dataToSend = {
         INotificationEvent: notification,
       };

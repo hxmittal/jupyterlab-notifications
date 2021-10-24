@@ -158,7 +158,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       try {
         let notifier = activateNotifier();
         const notification = await notifier.getNotification(rowId.data);
-        if (notification) {
+        if (notification && (notification?.recipient === "*" || notification.recipient ===  localStorage.getItem("notifications-username")!)) {
           let store = getStore();
           const subjectStore = [...store.subjectStore];
 
@@ -216,7 +216,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
             title: notebookName + ".ipynb",
             body: "Cell finished execution",
             subject: notebookName + ".ipynb",
-            recipient: "harshit",
+            recipient: "chrome",
             linkUrl: "",
             ephemeral: true,
             notifTimeout: 4000,
