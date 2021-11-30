@@ -40,7 +40,7 @@ export interface INotificationEvent {
   title: string;
   body: string;
   subject: string;
-  recipient?: string;
+  recipient?: string[];
   linkUrl?: string;
   ephemeral?: boolean;
   notifTimeout?: number;
@@ -144,7 +144,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
           localStorage.getItem("notifications-username")! +
           " just connected to the workspace!",
         subject: "User joined session",
-        recipient: "harshit",
+        recipient: ["*"],
         linkUrl: "",
         ephemeral: true,
         notifTimeout: 3000,
@@ -152,13 +152,13 @@ const plugin: JupyterFrontEndPlugin<void> = {
       };
       let notifier = activateNotifier();
       notifier.post(dataToSend);
-      ws.send("Hello, world");
+      ws.send(localStorage.getItem("notifications-username")!);
     };
     ws.onmessage = async function (rowId) {
       try {
         let notifier = activateNotifier();
         const notification = await notifier.getNotification(rowId.data);
-        if (notification && (notification?.recipient === "*" || notification.recipient ===  localStorage.getItem("notifications-username")!)) {
+        if (notification) {
           let store = getStore();
           const subjectStore = [...store.subjectStore];
 
@@ -216,7 +216,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
             title: notebookName + ".ipynb",
             body: "Cell finished execution",
             subject: notebookName + ".ipynb",
-            recipient: "chrome",
+            recipient: ["*"],
             linkUrl: "",
             ephemeral: true,
             notifTimeout: 4000,

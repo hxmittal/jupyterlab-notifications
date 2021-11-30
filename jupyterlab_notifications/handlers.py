@@ -14,14 +14,18 @@ from packaging.version import parse
 
 wss = []
 
+d = {}
 
 class wsHandler(websocketT.WebSocketHandler):
     def open(self):
         print('Online')
         if self not in wss:
             wss.append(self)
-
+            d[self] = ""
     def on_message(self, message):
+        print(message, "onmessage")
+        d[self] = message
+        print("d", d) 
         for client in wss:
             if client != self:
                 client.write_message(message)
@@ -32,9 +36,17 @@ class wsHandler(websocketT.WebSocketHandler):
             wss.remove(self)
 
 
-def wsSend(message):
-    for ws in wss:
-        ws.write_message(message)
+def wsSend(message, users = ["edge"]):
+    print(d, users)
+    if users == ["*"]:
+        for ws in wss:
+            ws.write_message(message)
+    else:
+            
+        for ws in wss:
+            if d[ws] in users:
+                print(d, d[ws])
+                ws.write_message(message)
 
 
 NAMESPACE = "/api"
@@ -124,18 +136,19 @@ class notifyBaseHandler(APIHandler):
         title = data["title"]
         body = data["body"]
         subject = data["subject"]
-        recipient = data["recipient"] 
+        recipients = data["recipient"] 
         linkUrl = data["linkUrl"]
         ephemeral = data["ephemeral"]
         notifTimeout = data["notifTimeout"]
         notifType = data["notifType"]
         created = time.time_ns()
-
-        insertData = (origin, title, body, subject, recipient, linkUrl, ephemeral,
-                      notifTimeout, notifType, created)
-        cur.execute(
-            "INSERT INTO notifs (origin, title, body, subject, recipient, linkUrl, ephemeral, notifTimeout, notifType, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", insertData)
-        rowId = cur.lastrowid
+        # print(recipients, "recep", type(recipients))
+        for recipient in recipients:
+            insertData = (origin, title, body, subject, recipient, linkUrl, ephemeral,
+                        notifTimeout, notifType, created)
+            cur.execute(
+                "INSERT INTO notifs (origin, title, body, subject, recipient, linkUrl, ephemeral, notifTimeout, notifType, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", insertData)
+            rowId = cur.lastrowid
         con.commit()
         con.close()
         self.set_status(201)
@@ -147,7 +160,7 @@ class notifyBaseHandler(APIHandler):
         # time.sleep(3)
         # tornado.ioloop.IOLoop.current().spawn_callback(wsSend, str(rowId))
         # print("here sennding ws")
-        wsSend(str(rowId))
+        wsSend(str(rowId), recipients)
 
 
 class notifyIDHandler(APIHandler):
